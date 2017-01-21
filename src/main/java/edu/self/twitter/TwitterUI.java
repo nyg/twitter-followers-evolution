@@ -9,7 +9,7 @@ import com.vaadin.spring.navigator.SpringNavigator;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 
-import edu.self.twitter.mvp.chart.ChartView;
+import edu.self.twitter.vp.chart.ChartView;
 
 @SpringUI
 public class TwitterUI extends UI {

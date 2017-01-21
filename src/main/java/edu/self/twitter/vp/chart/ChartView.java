@@ -1,4 +1,4 @@
-package edu.self.twitter.mvp.chart;
+package edu.self.twitter.vp.chart;
 
 import com.vaadin.navigator.View;
 

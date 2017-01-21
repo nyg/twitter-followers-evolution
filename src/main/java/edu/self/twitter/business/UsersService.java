@@ -1,5 +1,6 @@
 package edu.self.twitter.business;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,7 @@ public class UsersService {
     private static final String CURRENT_FOLLOWERS_COUNT = "SELECT followers FROM followers WHERE screen_name = ? ORDER BY timestamp DESC LIMIT 1";
     private static final String UPDATE_FOLLOWERS_COUNT = "INSERT INTO followers VALUES(?, ?, now())";
     private static final String LOG_UPDATE_RESULT = "Updated %s from %s to %s";
+    private static final String INSERT_USER = "INSERT INTO users VALUES(?)";
 
     @Autowired
     JdbcTemplate jdbc;
@@ -49,6 +51,36 @@ public class UsersService {
     }
 
     /**
+     * Inserts multiple users in the USERS table,
+     *
+     * @param screenNames a list of screen names to insert into the table
+     * @return the list of screen name that were not inserted into the table
+     */
+    public List<String> insertUsers(String[] screenNames) {
+
+        List<String> errors = new ArrayList<>();
+
+        for (String screenName : screenNames) {
+            if (!insertUser(screenName)) {
+                errors.add(screenName);
+            }
+            else {
+                LogUtil.info("Insert '%s'", screenName);
+            }
+        }
+
+        return errors;
+    }
+
+    /**
+     * Update the followers count for all Twitter screen names of the USERS
+     * table.
+     */
+    public void updateAllFollowersCount() {
+        getAllUsers().forEach(this::updateFollowersCount);
+    }
+
+    /**
      * Update the followers count for the given Twitter screen name.
      */
     public void updateFollowersCount(String screenName) {
@@ -70,11 +102,7 @@ public class UsersService {
         }
     }
 
-    /**
-     * Update the followers count for all Twitter screen names of the USERS
-     * table.
-     */
-    public void updateAllFollowersCount() {
-        getAllUsers().forEach(this::updateFollowersCount);
+    private boolean insertUser(String screenName) {
+        return jdbc.update(INSERT_USER, screenName) == 1;
     }
 }

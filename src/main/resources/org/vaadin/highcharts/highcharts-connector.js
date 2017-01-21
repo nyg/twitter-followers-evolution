@@ -9,9 +9,25 @@ window.org_vaadin_highcharts_AbstractHighChart = function() {
 
         if (screenName) {
             $.getJSON('/data?name=' + screenName + '&callback=?', function(data) {
-                Highcharts.stockChart(domId, {
+                Highcharts.chart(domId, {
+                    chart: {
+                        backgroundColor: 'transparent'
+                    },
+                    title: {
+                        text: null
+                    },
+                    credits: {
+                        enabled: false
+                    },
+                    xAxis: {
+                        type: 'datetime'
+                    },
+                    tooltip: {
+                        pointFormat: '<b>{point.y}</b> followers'
+                    },
                     series : [ {
-                        data : data,
+                        showInLegend: false,
+                        data : data
                     } ]
                 });
             });

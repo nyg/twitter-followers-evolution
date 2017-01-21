@@ -23,7 +23,7 @@ public class TwitterApplication {
     @Autowired
     UsersService usersService;
 
-    @Scheduled(fixedRate = 30000)
+    @Scheduled(fixedRate = 60000)
     public void updateFollowersCount() {
         usersService.updateAllFollowersCount();
     }

@@ -1,4 +1,4 @@
-package edu.self.twitter.mvp.chart;
+package edu.self.twitter.vp.chart;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.vaadin.highcharts.StockChart;

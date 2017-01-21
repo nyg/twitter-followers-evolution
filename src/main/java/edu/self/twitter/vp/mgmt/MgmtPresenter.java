@@ -1,4 +1,4 @@
-package edu.self.twitter.mvp.chart;
+package edu.self.twitter.vp.mgmt;
 
 import java.util.List;
 
@@ -8,12 +8,12 @@ import org.springframework.stereotype.Component;
 import edu.self.twitter.business.UsersService;
 
 @Component
-public class ChartPresenter {
+public class MgmtPresenter {
 
     @Autowired
     UsersService usersService;
 
-    public List<String> getAllUsers() {
-        return usersService.getAllUsers();
+    public List<String> insertUsers(String[] screenNames) {
+        return usersService.insertUsers(screenNames);
     }
 }

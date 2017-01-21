@@ -15,18 +15,22 @@ import twitter4j.User;
 public class TwitterService {
 
     public int getFollowersCount(String screenName) {
+
         try {
             User user = TwitterFactory.getSingleton().users().showUser(screenName);
             //printRateLimitStatus(user);
             return user.getFollowersCount();
         }
         catch (TwitterException e) {
-            if (e.getErrorCode() == 50) {
-                LogUtil.info("User not found: " + screenName);
+
+            if (e.isErrorMessageAvailable()) {
+                LogUtil.info("Error for '%s': %d, %s", screenName, e.getErrorCode(), e.getErrorMessage());
             }
             else {
+                LogUtil.severe("Issue with '%s'", screenName);
                 LogUtil.severe(e);
             }
+
             return -1;
         }
     }

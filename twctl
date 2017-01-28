@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+
+case "$1" in
+    'build' )
+        mvn clean package
+        ;;
+
+    'start' )
+        nohup java -jar target/twitter-followers-evolution-1.0-SNAPSHOT.jar > logs/twitter.logs 2>&1 &
+        ;;
+
+    'stop' )
+        pkill -INT -f twitter
+        ;;
+esac

@@ -1,5 +1,6 @@
-src/main/resources/twitter4j.properties
 target
 .classpath
 .project
 .settings
+logs
+twitter4j.properties

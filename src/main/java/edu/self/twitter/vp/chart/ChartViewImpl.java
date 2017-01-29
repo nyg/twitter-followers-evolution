@@ -4,7 +4,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.vaadin.highcharts.StockChart;
 
 import com.vaadin.navigator.ViewChangeListener.ViewChangeEvent;
+import com.vaadin.server.ExternalResource;
 import com.vaadin.spring.annotation.SpringView;
+import com.vaadin.ui.HorizontalLayout;
+import com.vaadin.ui.Link;
 import com.vaadin.ui.NativeSelect;
 import com.vaadin.ui.VerticalLayout;
 
@@ -32,13 +35,19 @@ public class ChartViewImpl extends VerticalLayout implements ChartView {
         chart.setScreenName(screenName);
         chart.setSizeFull();
 
-        NativeSelect screenNameSelect = new NativeSelect("Chart of followers for", presenter.getAllUsers());
+        NativeSelect screenNameSelect = new NativeSelect(null, presenter.getAllUsers());
         screenNameSelect.setImmediate(true);
         screenNameSelect.setNullSelectionAllowed(true);
         screenNameSelect.select(screenName);
         screenNameSelect.addValueChangeListener(e -> ((TwitterUI) getUI()).navigateToChart(e.getProperty().getValue().toString()));
 
-        addComponent(screenNameSelect);
+        String twitterUrl = "https://twitter.com/" + screenName;
+        Link twitterLink = new Link(twitterUrl, new ExternalResource(twitterUrl));
+
+        HorizontalLayout layout = new HorizontalLayout(screenNameSelect, twitterLink);
+        layout.setSpacing(true);
+
+        addComponent(layout);
         addComponent(chart);
         setExpandRatio(chart, 1);
     }

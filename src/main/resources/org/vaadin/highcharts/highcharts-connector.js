@@ -5,13 +5,12 @@ window.org_vaadin_highcharts_AbstractHighChart = function() {
         var domId = this.getState().domId;
         var screenName = this.getState().screenName;
 
-        console.log('Screen name: ' + screenName);
-
         if (screenName) {
             $.getJSON('/data?name=' + screenName + '&callback=?', function(data) {
                 Highcharts.chart(domId, {
                     chart: {
-                        backgroundColor: 'transparent'
+                        backgroundColor: 'transparent',
+                        zoomType: 'xy'
                     },
                     title: {
                         text: null
@@ -21,6 +20,12 @@ window.org_vaadin_highcharts_AbstractHighChart = function() {
                     },
                     xAxis: {
                         type: 'datetime'
+                    },
+                    yAxis: {
+                        allowDecimals: false,
+                        title: {
+                            text: null
+                        }
                     },
                     tooltip: {
                         pointFormat: '<b>{point.y}</b> followers'

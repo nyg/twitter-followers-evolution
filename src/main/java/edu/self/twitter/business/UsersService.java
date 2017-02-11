@@ -21,12 +21,18 @@ public class UsersService {
     private static final String UPDATE_FOLLOWERS_COUNT = "INSERT INTO followers VALUES(?, ?, now())";
     private static final String LOG_UPDATE_RESULT = "Updated %s from %s to %s";
     private static final String INSERT_USER = "INSERT INTO users VALUES(?)";
+    private static final String DELETE_USER = "DELETE FROM users WHERE screen_name = ?";
+    private static final String USER_EXISTS = "SELECT COUNT(*) FROM users WHERE screen_name = ?";
 
     @Autowired
     JdbcTemplate jdbc;
 
     @Autowired
     TwitterService twitterService;
+
+    public boolean doesUserExists(String screenName) {
+        return 1 == jdbc.queryForObject(USER_EXISTS, Integer.class, screenName);
+    }
 
     /**
      * Retrieves all Twitter screen names stored in the USERS table.
@@ -51,12 +57,12 @@ public class UsersService {
     }
 
     /**
-     * Inserts multiple users in the USERS table,
+     * Adds multiple users in the USERS table,
      *
      * @param screenNames a list of screen names to insert into the table
      * @return the list of screen name that were not inserted into the table
      */
-    public List<String> insertUsers(String[] screenNames) {
+    public List<String> addUsers(String[] screenNames) {
 
         List<String> errors = new ArrayList<>();
 
@@ -85,7 +91,7 @@ public class UsersService {
      */
     public void updateFollowersCount(String screenName) {
 
-        int followersCount = twitterService.getFollowersCount(screenName);
+        int followersCount = twitterService.getFollowerCount(screenName);
         int currentFollowersCount;
 
         try {
@@ -103,6 +109,10 @@ public class UsersService {
     }
 
     private boolean insertUser(String screenName) {
-        return jdbc.update(INSERT_USER, screenName) == 1;
+        return 1 == jdbc.update(INSERT_USER, screenName.trim());
+    }
+
+    public boolean deleteUser(String screenName) {
+        return 1 == jdbc.update(DELETE_USER, screenName);
     }
 }

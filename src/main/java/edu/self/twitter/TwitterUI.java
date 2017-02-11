@@ -2,6 +2,7 @@ package edu.self.twitter;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.vaadin.annotations.Theme;
 import com.vaadin.server.Page;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.spring.annotation.SpringUI;
@@ -11,6 +12,7 @@ import com.vaadin.ui.VerticalLayout;
 
 import edu.self.twitter.vp.chart.ChartView;
 
+@Theme("valo")
 @SpringUI
 public class TwitterUI extends UI {
 

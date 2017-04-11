@@ -1,7 +1,15 @@
 package edu.self.twitter.business;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -11,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import ch.nyg.java.util.LogUtil;
 import edu.self.twitter.model.LongTuple;
+import edu.self.twitter.model.Tuple;
 
 @Service
 public class UsersService {
@@ -23,12 +32,68 @@ public class UsersService {
     private static final String INSERT_USER = "INSERT INTO users VALUES(?)";
     private static final String DELETE_USER = "DELETE FROM users WHERE screen_name = ?";
     private static final String USER_EXISTS = "SELECT COUNT(*) FROM users WHERE screen_name = ?";
+    private static final String USER_HISTORY_COUNT = "SELECT COUNT(*) FROM followers WHERE screen_name = ?";
+    private static final String USER_HISTORY_FIRST = "SELECT * FROM followers WHERE screen_name = ? ORDER BY timestamp LIMIT 1";
+    private static final String USER_HISTORY_LAST = "SELECT * FROM followers WHERE screen_name = ? ORDER BY timestamp DESC LIMIT 1";
+    private static final String USER_HISTORY_LAST_PERIOD = "SELECT * FROM followers WHERE screen_name = ? AND timestamp < ? ORDER BY timestamp DESC LIMIT 1";
+
+    private static final BigDecimal DAY_IN_MS = new BigDecimal(24 * 60 * 60 * 1000);
 
     @Autowired
     JdbcTemplate jdbc;
 
     @Autowired
     TwitterService twitterService;
+
+    public List<Tuple<String, Integer>> getUserFollowersStatistics(String screenName) {
+
+        List<Tuple<String, Integer>> stats = new ArrayList<>();
+
+        stats.add(new Tuple<>("Number of data points", jdbc.queryForObject(USER_HISTORY_COUNT, Integer.class, screenName)));
+
+        Map<String, Object> first = jdbc.queryForMap(USER_HISTORY_FIRST, screenName);
+        Map<String, Object> last = jdbc.queryForMap(USER_HISTORY_LAST, screenName);
+
+        LocalDateTime localDateTimeLast = ((Timestamp) last.get("timestamp")).toLocalDateTime();
+        Map<String, Object> lastDay = jdbc.queryForMap(USER_HISTORY_LAST_PERIOD, screenName, localDateTimeLast.minusDays(1));
+        Map<String, Object> lastWeek = jdbc.queryForMap(USER_HISTORY_LAST_PERIOD, screenName, localDateTimeLast.minusDays(7));
+        Map<String, Object> lastMonth = jdbc.queryForMap(USER_HISTORY_LAST_PERIOD, screenName, localDateTimeLast.minusMonths(1));
+
+        BigDecimal followersFirst = new BigDecimal((Integer) first.get("followers"));
+        BigDecimal followersLast = new BigDecimal((Integer) last.get("followers"));
+        BigDecimal followersLastDay = new BigDecimal((Integer) lastDay.get("followers"));
+        BigDecimal followersLastWeek = new BigDecimal((Integer) lastWeek.get("followers"));
+        BigDecimal followersLastMonth = new BigDecimal((Integer) lastMonth.get("followers"));
+
+        BigDecimal timestampFirst = new BigDecimal(((Timestamp) first.get("timestamp")).getTime());
+        BigDecimal timestampLast = new BigDecimal(((Timestamp) last.get("timestamp")).getTime());
+        BigDecimal timestampLastDay = new BigDecimal(((Timestamp) lastDay.get("timestamp")).getTime());
+        BigDecimal timestampLastWeek = new BigDecimal(((Timestamp) lastWeek.get("timestamp")).getTime());
+        BigDecimal timestampLastMonth = new BigDecimal(((Timestamp) lastMonth.get("timestamp")).getTime());
+
+        BigDecimal dailyAvgOverall = DAY_IN_MS
+            .multiply(followersLast.subtract(followersFirst))
+            .divide(timestampLast.subtract(timestampFirst), RoundingMode.HALF_UP);
+
+        BigDecimal dailyAvgLastDay = DAY_IN_MS
+            .multiply(followersLast.subtract(followersLastDay))
+            .divide(timestampLast.subtract(timestampLastDay), RoundingMode.HALF_UP);
+
+        BigDecimal dailyAvgLastWeek = DAY_IN_MS
+            .multiply(followersLast.subtract(followersLastWeek))
+            .divide(timestampLast.subtract(timestampLastWeek), RoundingMode.HALF_UP);
+
+        BigDecimal dailyAvgLastMonth = DAY_IN_MS
+            .multiply(followersLast.subtract(followersLastMonth))
+            .divide(timestampLast.subtract(timestampLastMonth), RoundingMode.HALF_UP);
+
+        stats.add(new Tuple<>("Daily average increase (overall)", dailyAvgOverall.intValue()));
+        stats.add(new Tuple<>("Daily average increase (last day)", dailyAvgLastDay.intValue()));
+        stats.add(new Tuple<>("Daily average increase (last week)", dailyAvgLastWeek.intValue()));
+        stats.add(new Tuple<>("Daily average increase (last month)", dailyAvgLastMonth.intValue()));
+
+        return stats;
+    }
 
     public boolean doesUserExists(String screenName) {
         return 1 == jdbc.queryForObject(USER_EXISTS, Integer.class, screenName);
@@ -50,10 +115,32 @@ public class UsersService {
      * @return a list of {@link LongTuple} objects
      */
     public List<LongTuple> getUserHistory(String screenName) {
-        return jdbc.query(
+
+        List<LongTuple> results = jdbc.query(
             USER_HISTORY,
             (RowMapper<LongTuple>) (rs, rowNum) -> new LongTuple(rs.getTimestamp("timestamp").getTime(), rs.getInt("followers")),
             screenName);
+
+        LogUtil.info("Size: %d", results.size());
+
+        if (results.size() > 1000) {
+
+            Iterator<LongTuple> iterator = results.iterator();
+            Instant currentInstant, lastInstant = Instant.ofEpochMilli(iterator.next().x).truncatedTo(ChronoUnit.DAYS);
+
+            while (iterator.hasNext()) {
+                currentInstant = Instant.ofEpochMilli(iterator.next().x).truncatedTo(ChronoUnit.DAYS);
+                if (lastInstant.equals(currentInstant)) {
+                    iterator.remove(); // it's from the same day, remove it
+                }
+                else {
+                    lastInstant = currentInstant;
+                }
+            }
+        }
+
+        LogUtil.info("Size: %d", results.size());
+        return results;
     }
 
     /**

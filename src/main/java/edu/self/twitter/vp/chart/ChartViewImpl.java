@@ -1,7 +1,5 @@
 package edu.self.twitter.vp.chart;
 
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.vaadin.highcharts.StockChart;
 
@@ -12,13 +10,10 @@ import com.vaadin.spring.annotation.SpringView;
 import com.vaadin.spring.annotation.UIScope;
 import com.vaadin.ui.AbstractSelect.ItemCaptionMode;
 import com.vaadin.ui.Alignment;
-import com.vaadin.ui.Button;
+import com.vaadin.ui.Grid;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Link;
 import com.vaadin.ui.NativeSelect;
-import com.vaadin.ui.Notification;
-import com.vaadin.ui.Notification.Type;
-import com.vaadin.ui.TextField;
 import com.vaadin.ui.VerticalLayout;
 
 import edu.self.twitter.TwitterUI;
@@ -26,7 +21,7 @@ import twitter4j.User;
 
 @UIScope
 @SpringView(name = ChartView.NAME, ui = TwitterUI.class)
-public class ChartViewImpl extends VerticalLayout implements ChartView {
+public class ChartViewImpl extends HorizontalLayout implements ChartView {
 
     private static final long serialVersionUID = 1L;
 
@@ -39,11 +34,13 @@ public class ChartViewImpl extends VerticalLayout implements ChartView {
     private BeanContainer<String, User> allUsers;
 
     // UI
-    private Button deleteButton;
+    //private Button deleteButton;
     private Link twitterLink;
     private StockChart chart;
     private NativeSelect screenNameSelect;
-    private HorizontalLayout topLayout;
+    private HorizontalLayout twitterInfoLayout;
+
+    private Grid statsGrid;
 
     @Override
     public void enter(ViewChangeEvent event) {
@@ -68,6 +65,10 @@ public class ChartViewImpl extends VerticalLayout implements ChartView {
             allUsers = presenter.getAllUsers();
         }
 
+        // Chart
+        chart = new StockChart();
+        chart.setSizeFull();
+
         // Native select
         screenNameSelect = new NativeSelect(null, allUsers);
         screenNameSelect.setImmediate(true);
@@ -81,7 +82,7 @@ public class ChartViewImpl extends VerticalLayout implements ChartView {
             }
         });
 
-        // Delete button
+        /* Delete button
         deleteButton = new Button("Delete", e -> {
             if (presenter.deleteUser(screenName)) {
                 allUsers.removeItem(screenName);
@@ -90,12 +91,12 @@ public class ChartViewImpl extends VerticalLayout implements ChartView {
             else {
                 Notification.show("User deletion failed!", Type.ERROR_MESSAGE);
             }
-        });
+        });*/
 
         // Twitter link
         twitterLink = new Link("Twitter", null);
 
-        // Text field & add button
+        /* Text field & add button
         TextField newUserField = new TextField();
         Button addButton = new Button("Add new user", e -> {
             List<String> errors = presenter.addUsers(newUserField.getValue().split(","));
@@ -105,20 +106,25 @@ public class ChartViewImpl extends VerticalLayout implements ChartView {
             else {
                 Notification.show("Some users could not be added: " + String.join(", ", errors), Type.ERROR_MESSAGE);
             }
-        });
+        });*/
 
-        topLayout = new HorizontalLayout(screenNameSelect, deleteButton, twitterLink, newUserField, addButton);
-        topLayout.setSpacing(true);
-        topLayout.setWidth(100, Unit.PERCENTAGE);
-        topLayout.setComponentAlignment(screenNameSelect, Alignment.MIDDLE_LEFT);
-        topLayout.setComponentAlignment(twitterLink, Alignment.MIDDLE_LEFT);
+        twitterInfoLayout = new HorizontalLayout(screenNameSelect, twitterLink);
+        twitterInfoLayout.setSpacing(true);
+        twitterInfoLayout.setWidth(100, Unit.PERCENTAGE);
+        twitterInfoLayout.setComponentAlignment(screenNameSelect, Alignment.MIDDLE_LEFT);
+        twitterInfoLayout.setComponentAlignment(twitterLink, Alignment.MIDDLE_CENTER);
 
-        chart = new StockChart();
-        chart.setSizeFull();
+        statsGrid = new Grid("Statistics");
+        statsGrid.setHeaderVisible(false);
+        statsGrid.setWidth(100, Unit.PERCENTAGE);
+
+        VerticalLayout statsLayout = new VerticalLayout(twitterInfoLayout, statsGrid);
+        statsLayout.setSpacing(true);
+        statsLayout.setWidth(400, Unit.PIXELS);
 
         // Main layout
-        addComponent(topLayout);
         addComponent(chart);
+        addComponent(statsLayout);
         setExpandRatio(chart, 1);
         setSizeFull();
         setSpacing(true);
@@ -132,12 +138,13 @@ public class ChartViewImpl extends VerticalLayout implements ChartView {
             screenNameSelect.select(screenName);
             chart.setScreenName(screenName);
             twitterLink.setResource(new ExternalResource("https://twitter.com/" + screenName));
+            statsGrid.setContainerDataSource(presenter.getUserFollowersStatistics(screenName));
         }
 
-        topLayout.setExpandRatio(twitterLink, validScreenName ? 1 : 0);
-        topLayout.setExpandRatio(screenNameSelect, validScreenName ? 0 : 1);
+        twitterInfoLayout.setExpandRatio(twitterLink, validScreenName ? 1 : 0);
+        twitterInfoLayout.setExpandRatio(screenNameSelect, validScreenName ? 0 : 1);
 
-        deleteButton.setVisible(validScreenName);
+        //deleteButton.setVisible(validScreenName);
         twitterLink.setVisible(validScreenName);
         chart.setVisible(validScreenName);
     }

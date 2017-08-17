@@ -1,12 +1,10 @@
 package edu.self.twitter.vp.chart;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import com.vaadin.data.util.BeanContainer;
-import com.vaadin.data.util.BeanItemContainer;
 
 import edu.self.twitter.business.TwitterService;
 import edu.self.twitter.business.UsersService;
@@ -22,26 +20,16 @@ public class ChartPresenter {
     @Autowired
     private TwitterService twitterService;
 
-    public BeanContainer<String, User> getAllUsers() {
-        BeanContainer<String, User> container = new BeanContainer<>(User.class);
-        container.setBeanIdResolver(bean -> bean.getScreenName());
-        container.addAll(twitterService.getUsers(usersService.getAllUsers()));
-        return container;
+    public List<User> getAllUsers() {
+        return twitterService.getUsers(usersService.getAllUsers());
     }
 
-    public boolean doesUserExists(String screenName) {
-        return usersService.doesUserExists(screenName) && twitterService.getUser(screenName).isPresent();
+    public Optional<User> doesUserExists(String screenName) {
+        boolean existsInDb = usersService.doesUserExists(screenName);
+        return existsInDb ? twitterService.getUser(screenName) : Optional.empty();
     }
 
-    public boolean deleteUser(String screenName) {
-        return usersService.deleteUser(screenName);
-    }
-
-    public List<String> addUsers(String[] screenNames) {
-        return usersService.addUsers(screenNames);
-    }
-
-    public BeanItemContainer<Tuple<String, Integer>> getUserFollowersStatistics(String screenName) {
-        return new BeanItemContainer<>(Tuple.class, usersService.getUserFollowersStatistics(screenName));
+    public List<Tuple<String, Integer>> getUserFollowersStatistics(String screenName) {
+        return usersService.getUserFollowersStatistics(screenName);
     }
 }

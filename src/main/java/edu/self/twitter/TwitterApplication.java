@@ -5,7 +5,6 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 
 import edu.self.twitter.business.UsersService;
 
@@ -23,7 +22,7 @@ public class TwitterApplication {
     @Autowired
     UsersService usersService;
 
-    @Scheduled(fixedRate = 5 * 60 * 1000)
+    //@Scheduled(fixedRate = 5 * 60 * 1000)
     public void updateFollowersCount() {
         usersService.updateAllFollowersCount();
     }

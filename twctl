@@ -9,6 +9,10 @@ case "$1" in
         nohup java -jar target/twitter-followers-evolution-1.0-SNAPSHOT.jar > logs/twitter.logs 2>&1 &
         ;;
 
+    'start6' )
+        nohup java -Djava.net.preferIPv4Stack=false -jar target/twitter-followers-evolution-1.0-SNAPSHOT.jar --server.port=6789 > logs/twitter.logs 2>&1 &
+        ;;
+
     'stop' )
         pkill -INT -f twitter
         ;;
